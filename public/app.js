@@ -25,6 +25,9 @@
   const btnAddSave = document.getElementById('btn-add-save');
   const btnAddCancel = document.getElementById('btn-add-cancel');
   const memoryInfo = document.getElementById('memory-info');
+  const btnSettings = document.getElementById('btn-settings');
+  const settingsOverlay = document.getElementById('settings-overlay');
+  const btnSettingsClose = document.getElementById('btn-settings-close');
 
   // --- WebSocket ---
   function connectWs() {
@@ -68,10 +71,10 @@
   function renderStatus() {
     // Connection badge
     if (status.connected) {
-      connectionBadge.textContent = 'Display Connected';
+      connectionBadge.textContent = 'Online';
       connectionBadge.className = 'badge connected';
     } else {
-      connectionBadge.textContent = 'Display Disconnected';
+      connectionBadge.textContent = 'Offline';
       connectionBadge.className = 'badge disconnected';
     }
 
@@ -89,7 +92,7 @@
       progressBar.style.width = Math.max(0, pct) + '%';
       progressText.textContent = `${status.remainingSeconds}s / ${status.totalSeconds}s`;
     } else if (status.paused) {
-      progressText.textContent = `Paused - ${status.remainingSeconds}s / ${status.totalSeconds}s`;
+      progressText.textContent = `Paused \u2013 ${status.remainingSeconds}s / ${status.totalSeconds}s`;
     } else {
       progressBar.style.width = '0%';
       progressText.textContent = '';
@@ -99,11 +102,7 @@
     const hasUrls = config.urls.some(u => u.enabled);
     btnPause.disabled = !hasUrls;
     btnReload.disabled = !status.activeUrlId;
-    if (status.paused) {
-      btnPause.textContent = 'Resume';
-    } else {
-      btnPause.textContent = 'Pause';
-    }
+    btnPause.textContent = status.paused ? 'Resume' : 'Pause';
 
     // Update active indicators in list
     document.querySelectorAll('.url-item').forEach(el => {
@@ -127,14 +126,14 @@
       const totalStr = total >= 1024 ? (total / 1024).toFixed(1) + ' GB' : total + ' MB';
       const count = status.enabledCount || 0;
 
-      let text = `${count} active tab${count !== 1 ? 's' : ''} \u2013 ${availStr} available of ${totalStr}`;
+      let text = `${count} active tab${count !== 1 ? 's' : ''} \u2014 ${availStr} available of ${totalStr}`;
       memoryInfo.className = 'memory-info';
 
       if (pctAvail < 0.1) {
-        text += ' \u2013 memory is low, consider disabling some URLs';
+        text += ' \u2014 memory low, consider disabling some URLs';
         memoryInfo.classList.add('danger');
       } else if (pctAvail < 0.2) {
-        text += ' \u2013 memory is getting low';
+        text += ' \u2014 memory getting low';
         memoryInfo.classList.add('warning');
       }
 
@@ -150,7 +149,7 @@
     urlList.innerHTML = '';
 
     if (sorted.length === 0) {
-      urlList.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">No URLs configured. Click "+ Add URL" to get started.</div>';
+      urlList.innerHTML = '<div class="empty-state">No URLs configured. Add one to get started.</div>';
       return;
     }
 
@@ -169,7 +168,7 @@
     const div = document.createElement('div');
     div.className = 'url-item' + (entry.enabled ? '' : ' disabled');
     div.dataset.id = entry.id;
-    div.draggable = false; // Only drag via handle
+    div.draggable = false;
 
     const duration = entry.duration || config.settings.defaultDuration;
     const isActive = status.activeUrlId === entry.id;
@@ -189,14 +188,14 @@
         <div class="url-address">${escapeHtml(entry.url)}</div>
       </div>
       <div class="url-actions">
-        <button class="btn btn-sm btn-secondary" data-action="edit">Edit</button>
-        <button class="btn btn-sm btn-danger" data-action="delete">Delete</button>
+        <button class="btn btn-sm btn-ghost" data-action="edit">Edit</button>
+        <button class="btn btn-sm btn-danger" data-action="delete">Del</button>
       </div>
     `;
 
     if (isActive) div.classList.add('active');
 
-    // Click to jump (on the item body, not buttons)
+    // Click to jump
     div.addEventListener('click', (e) => {
       if (e.target.closest('[data-action]') || e.target.closest('.drag-handle') || e.target.closest('.url-toggle')) return;
       if (entry.enabled) {
@@ -265,6 +264,7 @@
     div.className = 'url-edit-form';
 
     div.innerHTML = `
+      <div class="form-title">Edit Entry</div>
       <div class="form-row">
         <label>Name</label>
         <input type="text" id="edit-name" value="${escapeAttr(entry.name)}">
@@ -285,7 +285,7 @@
       </div>
       <div class="form-actions">
         <button class="btn btn-primary" id="edit-save">Save</button>
-        <button class="btn btn-secondary" id="edit-cancel">Cancel</button>
+        <button class="btn btn-ghost" id="edit-cancel">Cancel</button>
       </div>
     `;
 
@@ -347,6 +347,27 @@
         api('PUT', '/settings', { defaultDuration: val });
       }
     }, 500);
+  });
+
+  // Settings modal
+  btnSettings.addEventListener('click', () => {
+    settingsOverlay.style.display = 'flex';
+  });
+
+  btnSettingsClose.addEventListener('click', () => {
+    settingsOverlay.style.display = 'none';
+  });
+
+  settingsOverlay.addEventListener('click', (e) => {
+    if (e.target === settingsOverlay) {
+      settingsOverlay.style.display = 'none';
+    }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && settingsOverlay.style.display !== 'none') {
+      settingsOverlay.style.display = 'none';
+    }
   });
 
   // Add URL form
