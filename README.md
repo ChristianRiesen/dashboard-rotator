@@ -1,0 +1,1 @@
+A rotator for dashboards
