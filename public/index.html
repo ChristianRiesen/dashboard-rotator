@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Rotator</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Dashboard Rotator</h1>
+      <span id="connection-badge" class="badge disconnected">Disconnected</span>
+    </header>
+
+    <!-- Now Showing Panel -->
+    <section class="panel now-showing" id="now-showing">
+      <h2>Now Showing</h2>
+      <div id="now-showing-content">
+        <div class="now-showing-name" id="active-name">No dashboard active</div>
+        <div class="progress-container">
+          <div class="progress-bar" id="progress-bar"></div>
+        </div>
+        <div class="progress-text" id="progress-text"></div>
+        <div class="now-showing-actions">
+          <button id="btn-pause" class="btn btn-secondary" disabled>Pause</button>
+          <button id="btn-reload" class="btn btn-secondary" disabled>Force Reload</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Settings -->
+    <section class="panel">
+      <h2>Settings</h2>
+      <div class="settings-row">
+        <label for="default-duration">Default display duration:</label>
+        <input type="number" id="default-duration" min="5" max="3600" value="30">
+        <span>seconds</span>
+      </div>
+    </section>
+
+    <!-- URL List -->
+    <section class="panel">
+      <div class="section-header">
+        <h2>URLs</h2>
+        <button id="btn-add-url" class="btn btn-primary">+ Add URL</button>
+      </div>
+
+      <div id="url-list"></div>
+
+      <!-- Add URL Form (hidden by default) -->
+      <div id="add-form" class="url-form" style="display: none;">
+        <h3>Add URL</h3>
+        <div class="form-row">
+          <label>Name</label>
+          <input type="text" id="add-name" placeholder="My Dashboard">
+        </div>
+        <div class="form-row">
+          <label>URL</label>
+          <input type="url" id="add-url" placeholder="https://example.com/dashboard">
+        </div>
+        <div class="form-row">
+          <label>Duration override (seconds)</label>
+          <input type="number" id="add-duration" min="5" max="3600" placeholder="Leave blank for default">
+        </div>
+        <div class="form-row">
+          <label class="checkbox-label">
+            <input type="checkbox" id="add-reload">
+            Reload on each display
+          </label>
+        </div>
+        <div class="form-actions">
+          <button id="btn-add-save" class="btn btn-primary">Add</button>
+          <button id="btn-add-cancel" class="btn btn-secondary">Cancel</button>
+        </div>
+      </div>
+
+      <!-- Memory info -->
+      <div id="memory-info" class="memory-info"></div>
+    </section>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
