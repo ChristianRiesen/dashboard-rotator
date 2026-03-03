@@ -7,30 +7,34 @@ echo ""
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
-# --- Disable FullPageOS default browser ---
-# FullPageOS launches its own Chromium via run_onepageos (called from start_gui).
-# We replace it with a sleep so the X session stays alive (start_gui waits on it;
-# if it exits, the Xsession error handler covers the screen with xmessage).
-echo "Disabling FullPageOS default browser..."
-DISABLED=false
-for SCRIPTS_DIR in /opt/custompios/scripts /home/pi/scripts; do
-    ONEPAGE="$SCRIPTS_DIR/run_onepageos"
-    if [ -f "$ONEPAGE" ] && ! grep -q "dashboard-rotator" "$ONEPAGE" 2>/dev/null; then
-        sudo cp "$ONEPAGE" "${ONEPAGE}.bak"
-        printf '#!/bin/bash\n# Disabled by dashboard-rotator installer (original saved as .bak)\nsleep infinity\n' | sudo tee "$ONEPAGE" > /dev/null
-        echo "  Disabled $ONEPAGE (backup at ${ONEPAGE}.bak)"
-        DISABLED=true
+# --- Replace the FullPageOS X session with our kiosk ---
+# FullPageOS uses lightdm to auto-login and run its own browser session.
+# We register our kiosk as a lightdm session and set it as the default.
+echo "Configuring kiosk display session..."
+
+# Create a lightdm session that runs our kiosk script
+sudo tee /usr/share/xsessions/dashboard-rotator.desktop > /dev/null <<EOF
+[Desktop Entry]
+Name=Dashboard Rotator
+Exec=$SCRIPT_DIR/start-kiosk.sh
+Type=Application
+EOF
+echo "  Created lightdm session: dashboard-rotator"
+
+# Set it as the auto-login session
+LIGHTDM_CONF="/etc/lightdm/lightdm.conf"
+if [ -f "$LIGHTDM_CONF" ]; then
+    # Replace any existing autologin-session line, or add one
+    if grep -q "^autologin-session=" "$LIGHTDM_CONF"; then
+        sudo sed -i 's/^autologin-session=.*/autologin-session=dashboard-rotator/' "$LIGHTDM_CONF"
+    elif grep -q "^\[Seat:\*\]" "$LIGHTDM_CONF"; then
+        sudo sed -i '/^\[Seat:\*\]/a autologin-session=dashboard-rotator' "$LIGHTDM_CONF"
+    else
+        printf '\n[Seat:*]\nautologin-session=dashboard-rotator\n' | sudo tee -a "$LIGHTDM_CONF" > /dev/null
     fi
-done
-# Also disable the systemd service if it exists (older FullPageOS versions)
-if systemctl cat fullpageos.service &>/dev/null; then
-    sudo systemctl stop fullpageos.service 2>/dev/null || true
-    sudo systemctl disable fullpageos.service 2>/dev/null || true
-    echo "  Disabled fullpageos.service"
-    DISABLED=true
-fi
-if [ "$DISABLED" = false ]; then
-    echo "  No FullPageOS browser found (skipping)."
+    echo "  Set lightdm auto-login session to dashboard-rotator"
+else
+    echo "  Warning: $LIGHTDM_CONF not found, lightdm session may need manual setup"
 fi
 
 # --- Install system packages ---
@@ -66,32 +70,24 @@ npm install --production
 # --- Make scripts executable ---
 chmod +x start-kiosk.sh start-server.sh
 
-# --- Install and enable systemd services ---
+# --- Install and enable server service ---
 echo ""
-echo "Setting up systemd services..."
+echo "Setting up server service..."
 sudo cp dashboard-rotator-server.service /etc/systemd/system/
-sudo cp dashboard-rotator-kiosk.service /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable dashboard-rotator-server
-sudo systemctl enable dashboard-rotator-kiosk
-
-# --- Start services ---
-echo ""
-echo "Starting services..."
 sudo systemctl start dashboard-rotator-server
-sleep 2
-sudo systemctl start dashboard-rotator-kiosk
 
 echo ""
 echo "=== Installation complete ==="
 echo ""
-echo "Both services are running and will start automatically on boot."
+echo "Reboot to start the kiosk display:"
+echo "  sudo reboot"
 echo ""
 echo "Management UI:  http://$(hostname -I | awk '{print $1}'):3000"
 echo ""
 echo "Useful commands:"
-echo "  sudo systemctl status dashboard-rotator-server"
-echo "  sudo systemctl status dashboard-rotator-kiosk"
-echo "  sudo systemctl restart dashboard-rotator-server"
-echo "  sudo systemctl restart dashboard-rotator-kiosk"
+echo "  sudo systemctl status dashboard-rotator-server   # server status"
+echo "  sudo systemctl restart dashboard-rotator-server   # restart server"
+echo "  sudo systemctl restart lightdm                    # restart kiosk display"
 echo ""

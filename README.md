@@ -47,11 +47,11 @@ bash install.sh
 
 The install script handles everything:
 
-- Disables the default FullPageOS browser
+- Replaces the FullPageOS browser session with the dashboard rotator kiosk
 - Installs `unclutter` (hides the mouse cursor)
 - Installs Node.js LTS if not already present
 - Installs npm dependencies
-- Sets up and starts both systemd services
+- Sets up and starts the server service
 
 Once complete, reboot to cleanly swap out the FullPageOS browser for the dashboard rotator:
 
@@ -69,27 +69,21 @@ Open the management UI from any browser on your network (the install script prin
 
 ## Services
 
-Two systemd services run on boot:
-
-| Service | Description |
-|---|---|
-| `dashboard-rotator-server` | Node.js backend (Express + WebSocket on port 3000) |
-| `dashboard-rotator-kiosk` | Chromium in kiosk mode with CDP on port 9222 |
+| Component | Managed by | Description |
+|---|---|---|
+| Server | systemd (`dashboard-rotator-server`) | Node.js backend (Express + WebSocket on port 3000) |
+| Kiosk | lightdm X session | Chromium in kiosk mode with CDP on port 9222 |
 
 Useful commands:
 
 ```bash
-# Check status
+# Server
 sudo systemctl status dashboard-rotator-server
-sudo systemctl status dashboard-rotator-kiosk
-
-# Restart
 sudo systemctl restart dashboard-rotator-server
-sudo systemctl restart dashboard-rotator-kiosk
-
-# View logs
 journalctl -u dashboard-rotator-server -f
-journalctl -u dashboard-rotator-kiosk -f
+
+# Kiosk display
+sudo systemctl restart lightdm
 ```
 
 ## Running locally (development)
