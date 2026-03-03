@@ -8,29 +8,13 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
 # --- Disable FullPageOS default browser ---
-# FullPageOS launches its own Chromium via run_onepageos (called from start_gui).
-# We replace it with a sleep so the X session stays alive (start_gui waits on it;
-# if it exits, the Xsession error handler covers the screen with xmessage).
-echo "Disabling FullPageOS default browser..."
-DISABLED=false
-for SCRIPTS_DIR in /opt/custompios/scripts /home/pi/scripts; do
-    ONEPAGE="$SCRIPTS_DIR/run_onepageos"
-    if [ -f "$ONEPAGE" ] && ! grep -q "dashboard-rotator" "$ONEPAGE" 2>/dev/null; then
-        sudo cp "$ONEPAGE" "${ONEPAGE}.bak"
-        printf '#!/bin/bash\n# Disabled by dashboard-rotator installer (original saved as .bak)\nsleep infinity\n' | sudo tee "$ONEPAGE" > /dev/null
-        echo "  Disabled $ONEPAGE (backup at ${ONEPAGE}.bak)"
-        DISABLED=true
-    fi
-done
-# Also disable the systemd service if it exists (older FullPageOS versions)
 if systemctl cat fullpageos.service &>/dev/null; then
+    echo "Disabling FullPageOS default browser..."
     sudo systemctl stop fullpageos.service 2>/dev/null || true
     sudo systemctl disable fullpageos.service 2>/dev/null || true
-    echo "  Disabled fullpageos.service"
-    DISABLED=true
-fi
-if [ "$DISABLED" = false ]; then
-    echo "  No FullPageOS browser found (skipping)."
+    echo "  FullPageOS browser disabled."
+else
+    echo "  FullPageOS service not found (skipping)."
 fi
 
 # --- Install system packages ---

@@ -1,0 +1,14 @@
+{
+  "name": "dashboard-rotator",
+  "version": "1.0.0",
+  "description": "Rotating dashboard display for Raspberry Pi with web-based management",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "chrome-remote-interface": "^0.33.2",
+    "express": "^4.21.2",
+    "ws": "^8.18.0"
+  }
+}

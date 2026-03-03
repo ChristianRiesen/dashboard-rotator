@@ -53,7 +53,13 @@ The install script handles everything:
 - Installs npm dependencies
 - Sets up and starts both systemd services
 
-Once complete, the management UI is available at `http://<pi-ip>:3000`.
+Once complete, reboot to cleanly swap out the FullPageOS browser for the dashboard rotator:
+
+```bash
+sudo reboot
+```
+
+After reboot, the management UI is available at `http://<pi-ip>:3000`.
 
 ### 4. Add your dashboards
 

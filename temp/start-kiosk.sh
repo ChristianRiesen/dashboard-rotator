@@ -6,23 +6,8 @@ xset s off
 xset -dpms
 xset s noblank
 
-# Rotate screen if needed, see 'xrandr -h' for options.
-DISPLAY_ORIENTATION=left
-
-if [[ "${DISPLAY_ORIENTATION}" != 'normal' ]];
-then
-  DISPLAY=:0 xrandr --orientation ${DISPLAY_ORIENTATION}
-fi
-
-# Start a window manager if one isn't already running
-if ! pgrep -x matchbox-window-manager > /dev/null; then
-    matchbox-window-manager &
-fi
-
 # Hide the mouse cursor
-if command -v unclutter &>/dev/null; then
-    unclutter -idle 0.1 -root &
-fi
+unclutter -idle 0.1 -root &
 
 # Ensure no stale Chromium lock
 rm -f /home/pi/.chromium-kiosk/SingletonLock 2>/dev/null
