@@ -370,7 +370,7 @@ class TabManager extends EventEmitter {
       connected: this.connected,
       memoryTotalMB: mem.totalMB,
       memoryAvailableMB: mem.availableMB,
-      enabledCount: this.enabledUrls.length
+      enabledCount: (this.config?.urls || []).filter(u => u.enabled).length
     };
   }
 

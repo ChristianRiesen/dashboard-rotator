@@ -101,6 +101,28 @@ app.post('/api/urls', async (req, res) => {
   res.status(201).json(entry);
 });
 
+// PUT /api/urls/reorder (must be before :id route)
+app.put('/api/urls/reorder', async (req, res) => {
+  const { ids } = req.body;
+  if (!Array.isArray(ids)) {
+    return res.status(400).json({ error: 'ids array required' });
+  }
+  const urlMap = new Map(config.urls.map(u => [u.id, u]));
+  ids.forEach((id, index) => {
+    const entry = urlMap.get(id);
+    if (entry) entry.order = index;
+  });
+  // Any URLs not in the ids array keep their relative order after the reordered ones
+  let nextOrder = ids.length;
+  config.urls
+    .filter(u => !ids.includes(u.id))
+    .sort((a, b) => a.order - b.order)
+    .forEach(u => u.order = nextOrder++);
+  config.urls.sort((a, b) => a.order - b.order);
+  await applyConfig();
+  res.json({ ok: true });
+});
+
 // PUT /api/urls/:id
 app.put('/api/urls/:id', async (req, res) => {
   const entry = config.urls.find(u => u.id === req.params.id);
@@ -129,28 +151,6 @@ app.delete('/api/urls/:id', async (req, res) => {
   // Re-normalize order
   config.urls.sort((a, b) => a.order - b.order);
   config.urls.forEach((u, i) => u.order = i);
-  await applyConfig();
-  res.json({ ok: true });
-});
-
-// PUT /api/urls/reorder
-app.put('/api/urls/reorder', async (req, res) => {
-  const { ids } = req.body;
-  if (!Array.isArray(ids)) {
-    return res.status(400).json({ error: 'ids array required' });
-  }
-  const urlMap = new Map(config.urls.map(u => [u.id, u]));
-  ids.forEach((id, index) => {
-    const entry = urlMap.get(id);
-    if (entry) entry.order = index;
-  });
-  // Any URLs not in the ids array keep their relative order after the reordered ones
-  let nextOrder = ids.length;
-  config.urls
-    .filter(u => !ids.includes(u.id))
-    .sort((a, b) => a.order - b.order)
-    .forEach(u => u.order = nextOrder++);
-  config.urls.sort((a, b) => a.order - b.order);
   await applyConfig();
   res.json({ ok: true });
 });

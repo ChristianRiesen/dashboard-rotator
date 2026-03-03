@@ -6,6 +6,7 @@
   let ws = null;
   let editingId = null;
   let durationSaveTimer = null;
+  let draggedId = null;
 
   // --- DOM refs ---
   const connectionBadge = document.getElementById('connection-badge');
@@ -227,33 +228,41 @@
     // Drag and drop via handle
     const handle = div.querySelector('.drag-handle');
     handle.addEventListener('dragstart', (e) => {
-      e.dataTransfer.setData('text/plain', entry.id);
+      draggedId = entry.id;
       e.dataTransfer.effectAllowed = 'move';
       div.classList.add('dragging');
     });
 
     handle.addEventListener('dragend', () => {
+      draggedId = null;
       div.classList.remove('dragging');
-      document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+      document.querySelectorAll('.drag-over-top, .drag-over-bottom').forEach(el => {
+        el.classList.remove('drag-over-top', 'drag-over-bottom');
+      });
     });
 
     div.addEventListener('dragover', (e) => {
       e.preventDefault();
       e.dataTransfer.dropEffect = 'move';
-      div.classList.add('drag-over');
+      if (!draggedId || draggedId === entry.id) return;
+      const rect = div.getBoundingClientRect();
+      const midY = rect.top + rect.height / 2;
+      div.classList.toggle('drag-over-top', e.clientY < midY);
+      div.classList.toggle('drag-over-bottom', e.clientY >= midY);
     });
 
     div.addEventListener('dragleave', () => {
-      div.classList.remove('drag-over');
+      div.classList.remove('drag-over-top', 'drag-over-bottom');
     });
 
     div.addEventListener('drop', (e) => {
       e.preventDefault();
-      div.classList.remove('drag-over');
-      const draggedId = e.dataTransfer.getData('text/plain');
-      if (draggedId && draggedId !== entry.id) {
-        reorderUrls(draggedId, entry.id);
-      }
+      e.stopPropagation();
+      div.classList.remove('drag-over-top', 'drag-over-bottom');
+      if (!draggedId || draggedId === entry.id) return;
+      const rect = div.getBoundingClientRect();
+      const dropAfter = e.clientY >= rect.top + rect.height / 2;
+      reorderUrls(draggedId, entry.id, dropAfter);
     });
 
     return div;
@@ -310,17 +319,40 @@
     return div;
   }
 
-  function reorderUrls(draggedId, targetId) {
+  function reorderUrls(fromId, targetId, dropAfter) {
     const sorted = [...config.urls].sort((a, b) => a.order - b.order);
     const ids = sorted.map(u => u.id);
-    const fromIndex = ids.indexOf(draggedId);
-    const toIndex = ids.indexOf(targetId);
+    const fromIndex = ids.indexOf(fromId);
+    let toIndex = ids.indexOf(targetId);
     if (fromIndex < 0 || toIndex < 0) return;
 
     ids.splice(fromIndex, 1);
-    ids.splice(toIndex, 0, draggedId);
+    // Recalculate target index after removal
+    toIndex = ids.indexOf(targetId);
+    if (dropAfter) toIndex++;
+    // Skip if position hasn't changed
+    if (toIndex === fromIndex) return;
+    ids.splice(toIndex, 0, fromId);
     api('PUT', '/urls/reorder', { ids });
   }
+
+  // --- Drag and drop on list container (catch drops in empty space) ---
+  urlList.addEventListener('dragover', (e) => {
+    if (!draggedId) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  });
+
+  urlList.addEventListener('drop', (e) => {
+    if (!draggedId) return;
+    e.preventDefault();
+    // Dropped in empty space below all items — move to end
+    const lastItem = urlList.querySelector('.url-item:last-child');
+    if (lastItem && lastItem.dataset.id !== draggedId) {
+      const targetId = lastItem.dataset.id;
+      reorderUrls(draggedId, targetId, true);
+    }
+  });
 
   // --- Event Listeners ---
 

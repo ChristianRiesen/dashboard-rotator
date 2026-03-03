@@ -307,8 +307,12 @@ header h1 .accent {
   opacity: 0.35;
 }
 
-.url-item.drag-over {
+.url-item.drag-over-top {
   border-top: 2px solid var(--accent);
+}
+
+.url-item.drag-over-bottom {
+  border-bottom: 2px solid var(--accent);
 }
 
 .url-item.dragging {
