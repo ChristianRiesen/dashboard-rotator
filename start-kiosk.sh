@@ -35,9 +35,15 @@ while true; do
         --remote-allow-origins=http://localhost:3000 \
         --noerrdialogs \
         --no-first-run \
+        --no-default-browser-check \
         --disable-infobars \
         --disable-session-crashed-bubble \
         --disable-component-update \
+        --disable-notifications \
+        --disable-popup-blocking \
+        --deny-permission-prompts \
+        --disable-geolocation \
+        --disable-features=TranslateUI,GlobalMediaControls,InterestFeedContentSuggestions \
         --autoplay-policy=no-user-gesture-required \
         --disable-features=TranslateUI \
         --overscroll-history-navigation=0 \
