@@ -9,6 +9,7 @@
   "dependencies": {
     "chrome-remote-interface": "^0.33.2",
     "express": "^4.21.2",
+    "multer": "^2.1.1",
     "ws": "^8.18.0"
   }
 }

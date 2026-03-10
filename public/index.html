@@ -42,27 +42,47 @@
     <section class="panel">
       <div class="section-header">
         <div class="panel-label">ROTATION QUEUE</div>
-        <button id="btn-add-url" class="btn btn-primary">+ Add URL</button>
+        <div class="section-header-actions">
+          <button id="btn-add-url" class="btn btn-primary">+ Add URL</button>
+          <button id="btn-add-image" class="btn btn-primary">+ Add Image</button>
+        </div>
       </div>
 
       <div id="url-list"></div>
 
-      <!-- Add URL Form (hidden by default) -->
+      <!-- Add Form (hidden by default) -->
       <div id="add-form" class="url-form" style="display: none;">
-        <div class="form-title">New Entry</div>
+        <div class="form-title" id="add-form-title">New Entry</div>
         <div class="form-row">
           <label>Name</label>
           <input type="text" id="add-name" placeholder="My Dashboard">
         </div>
-        <div class="form-row">
-          <label>URL</label>
-          <input type="url" id="add-url" placeholder="https://example.com/dashboard">
+        <!-- URL-specific fields -->
+        <div id="add-url-fields">
+          <div class="form-row">
+            <label>URL</label>
+            <input type="url" id="add-url" placeholder="https://example.com/dashboard">
+          </div>
+        </div>
+        <!-- Image-specific fields -->
+        <div id="add-image-fields" style="display: none;">
+          <div class="form-row">
+            <label>Image File</label>
+            <input type="file" id="add-image-file" accept="image/*">
+          </div>
+          <div class="form-row">
+            <label>Scaling</label>
+            <select id="add-image-scaling">
+              <option value="fill-vertical">Fill Vertically</option>
+              <option value="fill-horizontal">Fill Horizontally</option>
+            </select>
+          </div>
         </div>
         <div class="form-row">
           <label>Duration override (seconds)</label>
           <input type="number" id="add-duration" min="5" max="3600" placeholder="Leave blank for default">
         </div>
-        <div class="form-row">
+        <div id="add-reload-row" class="form-row">
           <label class="checkbox-label">
             <input type="checkbox" id="add-reload">
             Reload on each display

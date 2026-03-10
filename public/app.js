@@ -7,6 +7,7 @@
   let editingId = null;
   let durationSaveTimer = null;
   let draggedId = null;
+  let addType = 'url'; // 'url' or 'image'
 
   // --- DOM refs ---
   const connectionBadge = document.getElementById('connection-badge');
@@ -18,11 +19,18 @@
   const defaultDurationInput = document.getElementById('default-duration');
   const urlList = document.getElementById('url-list');
   const btnAddUrl = document.getElementById('btn-add-url');
+  const btnAddImage = document.getElementById('btn-add-image');
   const addForm = document.getElementById('add-form');
+  const addFormTitle = document.getElementById('add-form-title');
   const addName = document.getElementById('add-name');
   const addUrl = document.getElementById('add-url');
   const addDuration = document.getElementById('add-duration');
   const addReloadCheckbox = document.getElementById('add-reload');
+  const addReloadRow = document.getElementById('add-reload-row');
+  const addUrlFields = document.getElementById('add-url-fields');
+  const addImageFields = document.getElementById('add-image-fields');
+  const addImageFile = document.getElementById('add-image-file');
+  const addImageScaling = document.getElementById('add-image-scaling');
   const btnAddSave = document.getElementById('btn-add-save');
   const btnAddCancel = document.getElementById('btn-add-cancel');
   const memoryInfo = document.getElementById('memory-info');
@@ -65,6 +73,11 @@
     const opts = { method, headers: { 'Content-Type': 'application/json' } };
     if (body !== undefined) opts.body = JSON.stringify(body);
     const res = await fetch(`/api${path}`, opts);
+    return res.json();
+  }
+
+  async function apiFormData(method, path, formData) {
+    const res = await fetch(`/api${path}`, { method, body: formData });
     return res.json();
   }
 
@@ -144,6 +157,13 @@
     }
   }
 
+  // --- Scaling label helper ---
+  function scalingLabel(scaling) {
+    if (scaling === 'fill-horizontal') return 'Fill Horizontally';
+    if (scaling === 'fill-vertical') return 'Fill Vertically';
+    return scaling || '';
+  }
+
   // --- Render URL List ---
   function renderUrlList() {
     const sorted = [...config.urls].sort((a, b) => a.order - b.order);
@@ -173,6 +193,11 @@
 
     const duration = entry.duration || config.settings.defaultDuration;
     const isActive = status.activeUrlId === entry.id;
+    const isImage = entry.type === 'image';
+
+    const addressLine = isImage
+      ? `<span class="url-type-badge">IMG</span> ${escapeHtml(scalingLabel(entry.imageScaling))}`
+      : escapeHtml(entry.url);
 
     div.innerHTML = `
       <span class="drag-handle" draggable="true" title="Drag to reorder">\u2630</span>
@@ -184,9 +209,9 @@
         <div class="url-info-top">
           <span class="url-name">${escapeHtml(entry.name)}</span>
           <span class="url-duration">${duration}s</span>
-          ${entry.reloadOnDisplay ? '<span class="url-reload-badge">reload</span>' : ''}
+          ${entry.reloadOnDisplay && !isImage ? '<span class="url-reload-badge">reload</span>' : ''}
         </div>
-        <div class="url-address">${escapeHtml(entry.url)}</div>
+        <div class="url-address">${addressLine}</div>
       </div>
       <div class="url-actions">
         <button class="btn btn-sm btn-ghost" data-action="edit">Edit</button>
@@ -271,45 +296,95 @@
   function createEditForm(entry) {
     const div = document.createElement('div');
     div.className = 'url-edit-form';
+    const isImage = entry.type === 'image';
 
-    div.innerHTML = `
-      <div class="form-title">Edit Entry</div>
-      <div class="form-row">
-        <label>Name</label>
-        <input type="text" id="edit-name" value="${escapeAttr(entry.name)}">
-      </div>
-      <div class="form-row">
-        <label>URL</label>
-        <input type="url" id="edit-url" value="${escapeAttr(entry.url)}">
-      </div>
-      <div class="form-row">
-        <label>Duration override (seconds, blank for default)</label>
-        <input type="number" id="edit-duration" min="5" max="3600" value="${entry.duration || ''}">
-      </div>
-      <div class="form-row">
-        <label class="checkbox-label">
-          <input type="checkbox" id="edit-reload" ${entry.reloadOnDisplay ? 'checked' : ''}>
-          Reload on each display
-        </label>
-      </div>
-      <div class="form-actions">
-        <button class="btn btn-primary" id="edit-save">Save</button>
-        <button class="btn btn-ghost" id="edit-cancel">Cancel</button>
-      </div>
-    `;
+    if (isImage) {
+      div.innerHTML = `
+        <div class="form-title">Edit Image Entry</div>
+        <div class="form-row">
+          <label>Name</label>
+          <input type="text" id="edit-name" value="${escapeAttr(entry.name)}">
+        </div>
+        <div class="form-row">
+          <label>Replace Image (optional)</label>
+          <input type="file" id="edit-image-file" accept="image/*">
+        </div>
+        <div class="form-row">
+          <label>Scaling</label>
+          <select id="edit-image-scaling">
+            <option value="fill-vertical" ${entry.imageScaling === 'fill-vertical' ? 'selected' : ''}>Fill Vertically</option>
+            <option value="fill-horizontal" ${entry.imageScaling === 'fill-horizontal' ? 'selected' : ''}>Fill Horizontally</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label>Duration override (seconds, blank for default)</label>
+          <input type="number" id="edit-duration" min="5" max="3600" value="${entry.duration || ''}">
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-primary" id="edit-save">Save</button>
+          <button class="btn btn-ghost" id="edit-cancel">Cancel</button>
+        </div>
+      `;
 
-    div.querySelector('#edit-save').addEventListener('click', () => {
-      const name = div.querySelector('#edit-name').value.trim();
-      const url = div.querySelector('#edit-url').value.trim();
-      const durVal = div.querySelector('#edit-duration').value;
-      const duration = durVal ? parseInt(durVal, 10) : null;
-      const reloadOnDisplay = div.querySelector('#edit-reload').checked;
+      div.querySelector('#edit-save').addEventListener('click', () => {
+        const name = div.querySelector('#edit-name').value.trim();
+        if (!name) return alert('Name is required.');
 
-      if (!name || !url) return alert('Name and URL are required.');
+        const durVal = div.querySelector('#edit-duration').value;
+        const imageScaling = div.querySelector('#edit-image-scaling').value;
+        const fileInput = div.querySelector('#edit-image-file');
 
-      editingId = null;
-      api('PUT', `/urls/${entry.id}`, { name, url, duration, reloadOnDisplay });
-    });
+        const formData = new FormData();
+        formData.append('name', name);
+        formData.append('duration', durVal || '');
+        formData.append('imageScaling', imageScaling);
+        if (fileInput.files.length > 0) {
+          formData.append('image', fileInput.files[0]);
+        }
+
+        editingId = null;
+        apiFormData('POST', `/urls/${entry.id}/update-image`, formData);
+      });
+    } else {
+      div.innerHTML = `
+        <div class="form-title">Edit Entry</div>
+        <div class="form-row">
+          <label>Name</label>
+          <input type="text" id="edit-name" value="${escapeAttr(entry.name)}">
+        </div>
+        <div class="form-row">
+          <label>URL</label>
+          <input type="url" id="edit-url" value="${escapeAttr(entry.url)}">
+        </div>
+        <div class="form-row">
+          <label>Duration override (seconds, blank for default)</label>
+          <input type="number" id="edit-duration" min="5" max="3600" value="${entry.duration || ''}">
+        </div>
+        <div class="form-row">
+          <label class="checkbox-label">
+            <input type="checkbox" id="edit-reload" ${entry.reloadOnDisplay ? 'checked' : ''}>
+            Reload on each display
+          </label>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-primary" id="edit-save">Save</button>
+          <button class="btn btn-ghost" id="edit-cancel">Cancel</button>
+        </div>
+      `;
+
+      div.querySelector('#edit-save').addEventListener('click', () => {
+        const name = div.querySelector('#edit-name').value.trim();
+        const url = div.querySelector('#edit-url').value.trim();
+        const durVal = div.querySelector('#edit-duration').value;
+        const duration = durVal ? parseInt(durVal, 10) : null;
+        const reloadOnDisplay = div.querySelector('#edit-reload').checked;
+
+        if (!name || !url) return alert('Name and URL are required.');
+
+        editingId = null;
+        api('PUT', `/urls/${entry.id}`, { name, url, duration, reloadOnDisplay });
+      });
+    }
 
     div.querySelector('#edit-cancel').addEventListener('click', () => {
       editingId = null;
@@ -402,15 +477,35 @@
     }
   });
 
-  // Add URL form
-  btnAddUrl.addEventListener('click', () => {
+  // --- Add form helpers ---
+  function openAddForm(type) {
+    addType = type;
     addForm.style.display = 'block';
     addName.value = '';
     addUrl.value = '';
     addDuration.value = '';
     addReloadCheckbox.checked = false;
+    addImageFile.value = '';
+    addImageScaling.value = 'fill-vertical';
+
+    if (type === 'image') {
+      addFormTitle.textContent = 'New Image';
+      addUrlFields.style.display = 'none';
+      addImageFields.style.display = 'block';
+      addReloadRow.style.display = 'none';
+    } else {
+      addFormTitle.textContent = 'New Entry';
+      addUrlFields.style.display = 'block';
+      addImageFields.style.display = 'none';
+      addReloadRow.style.display = 'block';
+    }
+
     addName.focus();
-  });
+  }
+
+  // Add URL form
+  btnAddUrl.addEventListener('click', () => openAddForm('url'));
+  btnAddImage.addEventListener('click', () => openAddForm('image'));
 
   btnAddCancel.addEventListener('click', () => {
     addForm.style.display = 'none';
@@ -418,14 +513,30 @@
 
   btnAddSave.addEventListener('click', () => {
     const name = addName.value.trim();
-    const url = addUrl.value.trim();
-    const durVal = addDuration.value;
-    const duration = durVal ? parseInt(durVal, 10) : null;
-    const reloadOnDisplay = addReloadCheckbox.checked;
+    if (!name) return alert('Name is required.');
 
-    if (!name || !url) return alert('Name and URL are required.');
+    if (addType === 'image') {
+      if (!addImageFile.files.length) return alert('Please select an image file.');
 
-    api('POST', '/urls', { name, url, duration, reloadOnDisplay });
+      const formData = new FormData();
+      formData.append('name', name);
+      formData.append('image', addImageFile.files[0]);
+      formData.append('imageScaling', addImageScaling.value);
+      const durVal = addDuration.value;
+      if (durVal) formData.append('duration', durVal);
+
+      apiFormData('POST', '/urls/image', formData);
+    } else {
+      const url = addUrl.value.trim();
+      if (!url) return alert('URL is required.');
+
+      const durVal = addDuration.value;
+      const duration = durVal ? parseInt(durVal, 10) : null;
+      const reloadOnDisplay = addReloadCheckbox.checked;
+
+      api('POST', '/urls', { name, url, duration, reloadOnDisplay });
+    }
+
     addForm.style.display = 'none';
   });
 

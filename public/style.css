@@ -266,6 +266,11 @@ header h1 .accent {
   margin-bottom: 0;
 }
 
+.section-header-actions {
+  display: flex;
+  gap: 6px;
+}
+
 /* === URL LIST === */
 #url-list {
   display: flex;
@@ -405,6 +410,18 @@ header h1 .accent {
   margin-top: 2px;
 }
 
+.url-type-badge {
+  font-size: 0.6rem;
+  font-weight: 600;
+  background: rgba(100, 60, 180, 0.15);
+  color: #a080e0;
+  padding: 1px 5px;
+  border-radius: 2px;
+  letter-spacing: 0.05em;
+  border: 1px solid rgba(100, 60, 180, 0.25);
+  margin-right: 4px;
+}
+
 .url-actions {
   display: flex;
   gap: 4px;
@@ -466,7 +483,56 @@ header h1 .accent {
   transition: border-color 0.15s;
 }
 
-.form-row input:focus {
+.form-row select {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 0.85rem;
+  font-family: var(--font);
+  background: var(--bg-input);
+  color: var(--text-bright);
+  transition: border-color 0.15s;
+  cursor: pointer;
+}
+
+.form-row select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent-glow);
+}
+
+.form-row input[type="file"] {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 0.8rem;
+  font-family: var(--font);
+  background: var(--bg-input);
+  color: var(--text-bright);
+  cursor: pointer;
+}
+
+.form-row input[type="file"]::file-selector-button {
+  background: var(--accent-dim);
+  color: #fff;
+  border: none;
+  padding: 4px 12px;
+  border-radius: var(--radius);
+  font-family: var(--font);
+  font-size: 0.75rem;
+  cursor: pointer;
+  margin-right: 10px;
+  transition: background 0.15s;
+}
+
+.form-row input[type="file"]::file-selector-button:hover {
+  background: var(--accent);
+}
+
+.form-row input:focus,
+.form-row select:focus {
   outline: none;
   border-color: var(--accent);
   box-shadow: 0 0 0 1px var(--accent-glow);
