@@ -31,6 +31,7 @@
   const addImageFields = document.getElementById('add-image-fields');
   const addImageFile = document.getElementById('add-image-file');
   const addImageScaling = document.getElementById('add-image-scaling');
+  const addZoom = document.getElementById('add-zoom');
   const btnAddSave = document.getElementById('btn-add-save');
   const btnAddCancel = document.getElementById('btn-add-cancel');
   const memoryInfo = document.getElementById('memory-info');
@@ -209,6 +210,7 @@
         <div class="url-info-top">
           <span class="url-name">${escapeHtml(entry.name)}</span>
           <span class="url-duration">${duration}s</span>
+          ${entry.zoom && entry.zoom !== 100 ? `<span class="url-zoom-badge">${entry.zoom}%</span>` : ''}
           ${entry.reloadOnDisplay && !isImage ? '<span class="url-reload-badge">reload</span>' : ''}
         </div>
         <div class="url-address">${addressLine}</div>
@@ -320,6 +322,13 @@
           <label>Duration override (seconds, blank for default)</label>
           <input type="number" id="edit-duration" min="5" max="3600" value="${entry.duration || ''}">
         </div>
+        <div class="form-row">
+          <label>Zoom (%)</label>
+          <div class="input-with-unit">
+            <input type="number" id="edit-zoom" min="25" max="500" value="${entry.zoom || ''}" placeholder="100">
+            <span class="input-unit">%</span>
+          </div>
+        </div>
         <div class="form-actions">
           <button class="btn btn-primary" id="edit-save">Save</button>
           <button class="btn btn-ghost" id="edit-cancel">Cancel</button>
@@ -331,12 +340,14 @@
         if (!name) return alert('Name is required.');
 
         const durVal = div.querySelector('#edit-duration').value;
+        const zoomVal = div.querySelector('#edit-zoom').value;
         const imageScaling = div.querySelector('#edit-image-scaling').value;
         const fileInput = div.querySelector('#edit-image-file');
 
         const formData = new FormData();
         formData.append('name', name);
         formData.append('duration', durVal || '');
+        formData.append('zoom', zoomVal || '');
         formData.append('imageScaling', imageScaling);
         if (fileInput.files.length > 0) {
           formData.append('image', fileInput.files[0]);
@@ -361,6 +372,13 @@
           <input type="number" id="edit-duration" min="5" max="3600" value="${entry.duration || ''}">
         </div>
         <div class="form-row">
+          <label>Zoom (%)</label>
+          <div class="input-with-unit">
+            <input type="number" id="edit-zoom" min="25" max="500" value="${entry.zoom || ''}" placeholder="100">
+            <span class="input-unit">%</span>
+          </div>
+        </div>
+        <div class="form-row">
           <label class="checkbox-label">
             <input type="checkbox" id="edit-reload" ${entry.reloadOnDisplay ? 'checked' : ''}>
             Reload on each display
@@ -377,12 +395,14 @@
         const url = div.querySelector('#edit-url').value.trim();
         const durVal = div.querySelector('#edit-duration').value;
         const duration = durVal ? parseInt(durVal, 10) : null;
+        const zoomVal = div.querySelector('#edit-zoom').value;
+        const zoom = zoomVal ? parseInt(zoomVal, 10) : null;
         const reloadOnDisplay = div.querySelector('#edit-reload').checked;
 
         if (!name || !url) return alert('Name and URL are required.');
 
         editingId = null;
-        api('PUT', `/urls/${entry.id}`, { name, url, duration, reloadOnDisplay });
+        api('PUT', `/urls/${entry.id}`, { name, url, duration, zoom, reloadOnDisplay });
       });
     }
 
@@ -485,6 +505,7 @@
     addUrl.value = '';
     addDuration.value = '';
     addReloadCheckbox.checked = false;
+    addZoom.value = '';
     addImageFile.value = '';
     addImageScaling.value = 'fill-vertical';
 
@@ -524,6 +545,8 @@
       formData.append('imageScaling', addImageScaling.value);
       const durVal = addDuration.value;
       if (durVal) formData.append('duration', durVal);
+      const zoomVal = addZoom.value;
+      if (zoomVal) formData.append('zoom', zoomVal);
 
       apiFormData('POST', '/urls/image', formData);
     } else {
@@ -532,9 +555,11 @@
 
       const durVal = addDuration.value;
       const duration = durVal ? parseInt(durVal, 10) : null;
+      const zoomVal = addZoom.value;
+      const zoom = zoomVal ? parseInt(zoomVal, 10) : null;
       const reloadOnDisplay = addReloadCheckbox.checked;
 
-      api('POST', '/urls', { name, url, duration, reloadOnDisplay });
+      api('POST', '/urls', { name, url, duration, zoom, reloadOnDisplay });
     }
 
     addForm.style.display = 'none';

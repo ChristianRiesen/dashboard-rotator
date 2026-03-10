@@ -123,6 +123,11 @@ class TabManager extends EventEmitter {
         const idx = enabledUrls.findIndex(u => u.id === this.activeUrlId);
         if (idx >= 0) {
           this.currentIndex = idx;
+          // Re-apply zoom in case it changed via edit
+          const targetId = this.tabs.get(this.activeUrlId);
+          if (targetId) {
+            await this._applyZoom(targetId, enabledUrls[idx].zoom);
+          }
         }
         // Restart the tick timer with potentially updated duration
         if (!this.paused) {
@@ -231,6 +236,21 @@ class TabManager extends EventEmitter {
     }
   }
 
+  async _applyZoom(targetId, zoom) {
+    const factor = (zoom && zoom > 0) ? zoom / 100 : 1.0;
+    let client;
+    try {
+      client = await CDP({ port: CDP_PORT, target: targetId });
+      await client.Emulation.setPageScaleFactor({ pageScaleFactor: factor });
+    } catch (err) {
+      console.error('Failed to apply zoom:', err.message);
+    } finally {
+      if (client) {
+        try { await client.close(); } catch {}
+      }
+    }
+  }
+
   async _activateByIndex(index) {
     if (this.enabledUrls.length === 0) return;
 
@@ -246,6 +266,7 @@ class TabManager extends EventEmitter {
     this.remainingSeconds = duration;
 
     await this._activateTab(targetId);
+    await this._applyZoom(targetId, urlEntry.zoom);
     this.emit('status');
 
     if (!this.paused) {
@@ -358,6 +379,11 @@ class TabManager extends EventEmitter {
     const targetId = this.tabs.get(this.activeUrlId);
     if (!targetId) return;
     await this._reloadTab(targetId);
+    // Re-apply zoom after reload
+    const urlEntry = this.enabledUrls.find(u => u.id === this.activeUrlId);
+    if (urlEntry) {
+      await this._applyZoom(targetId, urlEntry.zoom);
+    }
   }
 
   getStatus() {

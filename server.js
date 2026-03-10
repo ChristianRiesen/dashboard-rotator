@@ -138,6 +138,7 @@ app.post('/api/urls/image', upload.single('image'), async (req, res) => {
   }
   const { name, imageScaling } = req.body;
   const duration = req.body.duration ? parseInt(req.body.duration, 10) : null;
+  const zoom = req.body.zoom ? parseInt(req.body.zoom, 10) : null;
   if (!name) {
     return res.status(400).json({ error: 'name is required' });
   }
@@ -152,6 +153,7 @@ app.post('/api/urls/image', upload.single('image'), async (req, res) => {
     imageFile: req.file.filename,
     imageScaling: scaling,
     duration: (duration && duration > 0) ? duration : null,
+    zoom: (zoom && zoom > 0) ? zoom : null,
     reloadOnDisplay: true,
     enabled: true,
     order: maxOrder + 1
@@ -169,10 +171,15 @@ app.post('/api/urls/:id/update-image', upload.single('image'), async (req, res) 
   }
   const { name, imageScaling } = req.body;
   const duration = req.body.duration;
+  const zoom = req.body.zoom;
   if (name !== undefined && name.trim()) entry.name = name.trim();
   if (duration !== undefined) {
     const d = parseInt(duration, 10);
     entry.duration = (d > 0) ? d : null;
+  }
+  if (zoom !== undefined) {
+    const z = parseInt(zoom, 10);
+    entry.zoom = (z > 0) ? z : null;
   }
   if (imageScaling !== undefined) entry.imageScaling = imageScaling;
 
@@ -192,7 +199,7 @@ app.post('/api/urls/:id/update-image', upload.single('image'), async (req, res) 
 
 // POST /api/urls
 app.post('/api/urls', async (req, res) => {
-  const { url, name, duration, reloadOnDisplay } = req.body;
+  const { url, name, duration, zoom, reloadOnDisplay } = req.body;
   if (!url || !name) {
     return res.status(400).json({ error: 'url and name are required' });
   }
@@ -202,6 +209,7 @@ app.post('/api/urls', async (req, res) => {
     url,
     name,
     duration: (typeof duration === 'number' && duration > 0) ? duration : null,
+    zoom: (typeof zoom === 'number' && zoom > 0) ? zoom : null,
     reloadOnDisplay: !!reloadOnDisplay,
     enabled: true,
     order: maxOrder + 1
@@ -239,11 +247,14 @@ app.put('/api/urls/:id', async (req, res) => {
   if (!entry) {
     return res.status(404).json({ error: 'URL not found' });
   }
-  const { url, name, duration, reloadOnDisplay, enabled } = req.body;
+  const { url, name, duration, zoom, reloadOnDisplay, enabled } = req.body;
   if (url !== undefined) entry.url = url;
   if (name !== undefined) entry.name = name;
   if (duration !== undefined) {
     entry.duration = (typeof duration === 'number' && duration > 0) ? duration : null;
+  }
+  if (zoom !== undefined) {
+    entry.zoom = (typeof zoom === 'number' && zoom > 0) ? zoom : null;
   }
   if (reloadOnDisplay !== undefined) entry.reloadOnDisplay = !!reloadOnDisplay;
   if (enabled !== undefined) entry.enabled = !!enabled;

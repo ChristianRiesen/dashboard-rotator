@@ -390,6 +390,17 @@ header h1 .accent {
   letter-spacing: 0.05em;
 }
 
+.url-zoom-badge {
+  font-size: 0.65rem;
+  background: rgba(34, 140, 204, 0.1);
+  color: #44aadd;
+  padding: 1px 6px;
+  border-radius: 2px;
+  flex-shrink: 0;
+  letter-spacing: 0.02em;
+  border: 1px solid rgba(34, 140, 204, 0.2);
+}
+
 .url-reload-badge {
   font-size: 0.65rem;
   background: rgba(204, 34, 51, 0.1);

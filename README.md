@@ -86,6 +86,19 @@ journalctl -u dashboard-rotator-server -f
 sudo systemctl restart lightdm
 ```
 
+## Updating
+
+After pulling new code on the Pi:
+
+```bash
+cd ~/dashboard-rotator
+git pull
+npm install
+sudo systemctl restart dashboard-rotator-server
+```
+
+Chromium stays running — the server reconnects via CDP automatically. No reboot needed.
+
 ## Running locally (development)
 
 Requires Node.js and a Chromium instance with remote debugging enabled.
