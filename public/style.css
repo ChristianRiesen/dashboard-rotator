@@ -433,6 +433,15 @@ header h1 .accent {
   margin-right: 4px;
 }
 
+.url-preview {
+  height: 32px;
+  width: 48px;
+  object-fit: cover;
+  border-radius: 2px;
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
 .url-actions {
   display: flex;
   gap: 4px;

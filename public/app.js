@@ -215,6 +215,7 @@
         </div>
         <div class="url-address">${addressLine}</div>
       </div>
+      ${isImage ? `<img class="url-preview" src="/images/${encodeURIComponent(entry.imageFile)}" alt="">` : ''}
       <div class="url-actions">
         <button class="btn btn-sm btn-ghost" data-action="edit">Edit</button>
         <button class="btn btn-sm btn-danger" data-action="delete">Del</button>
