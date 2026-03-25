@@ -320,6 +320,25 @@ class TabManager extends EventEmitter {
   async _advanceToNext() {
     if (this.enabledUrls.length === 0) return;
 
+    // Single entry: don't rotate, just reload if configured and restart timer
+    if (this.enabledUrls.length === 1) {
+      const urlEntry = this.enabledUrls[0];
+      const targetId = this.tabs.get(urlEntry.id);
+      if (targetId && urlEntry.reloadOnDisplay && urlEntry.type !== 'image') {
+        await this._reloadTab(targetId);
+        await this._applyZoom(targetId, urlEntry.zoom);
+      }
+      // Reset timer
+      const duration = urlEntry.duration || this.config.settings.defaultDuration;
+      this.totalSeconds = duration;
+      this.remainingSeconds = duration;
+      this.emit('status');
+      if (!this.paused) {
+        this._startRotationTimer();
+      }
+      return;
+    }
+
     const nextIndex = (this.currentIndex + 1) % this.enabledUrls.length;
     const nextUrl = this.enabledUrls[nextIndex];
     const targetId = this.tabs.get(nextUrl.id);
