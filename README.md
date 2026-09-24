@@ -26,33 +26,50 @@ In Raspberry Pi Imager, click **Edit Settings** before writing and configure:
 
 Insert the card, boot the Pi and let it finish its first-boot setup.
 
-### 2. Copy the project to the Pi
+### 2. Get to a terminal
 
-SSH in and clone the repository:
+Either SSH in from another machine:
 
 ```bash
 ssh <user>@dashboard.local
-cd ~
-git clone https://github.com/ChristianRiesen/dashboard-rotator.git
 ```
 
-Or copy it from your computer with `scp`:
+or open **Terminal** on the Pi itself from the application menu. Everything
+below is the same either way, and it is the last time you need the desktop —
+after the install the Pi boots straight into the kiosk.
+
+If the desktop shows the first-boot **Welcome** wizard, click through it (or
+skip it) first, so it does not reappear later.
+
+### 3. Install it
+
+Copy and paste this block. It fetches the project into your home folder and
+runs the installer:
+
+```bash
+sudo apt update
+sudo apt install -y git
+cd ~
+git clone https://github.com/ChristianRiesen/dashboard-rotator.git
+cd ~/dashboard-rotator
+bash install.sh
+```
+
+On a brand new card it is worth bringing the whole system up to date first —
+`sudo apt full-upgrade -y && sudo reboot` — but it is not required: the
+installer pulls in everything it needs by itself.
+
+Run `install.sh` as your normal user — **not** with `sudo`. It asks for your
+password once, up front, and then runs unattended for a few minutes.
+
+If you would rather copy the project from your own computer than clone it, skip
+the `git clone` and use `scp` from there instead:
 
 ```bash
 scp -r /path/to/dashboard-rotator <user>@dashboard.local:~/dashboard-rotator
 ```
 
-### 3. Run the install script
-
-Run it as your normal user — **not** with `sudo`. It asks for the sudo password
-once and then runs unattended.
-
-```bash
-cd ~/dashboard-rotator
-bash install.sh
-```
-
-The script does everything in one go:
+The installer does everything in one go:
 
 - installs the packages it needs (Chromium, labwc, wlr-randr, LightDM, Node.js)
 - installs the npm dependencies
@@ -62,15 +79,33 @@ The script does everything in one go:
 - moves logging into RAM so the SD card is left alone (see below)
 - installs and starts the management server as a systemd service
 
+It prints the address of the management UI when it finishes.
+
+### 4. Check the display settings, then reboot
+
+The installer created `kiosk.conf` in the project folder. Two settings are worth
+a look before the first kiosk boot — see [Kiosk settings](#kiosk-settings) for
+the rest:
+
+```bash
+nano ~/dashboard-rotator/kiosk.conf
+```
+
+- `ROTATION` — leave it at `normal` for a landscape screen, set `90`, `180` or
+  `270` for a rotated one
+- `HIDE_CURSOR` — `yes` hides the mouse pointer; set `no` if you plan to log
+  into dashboards by hand first
+
 Then reboot:
 
 ```bash
 sudo reboot
 ```
 
-The Pi comes back up in the kiosk. Re-running `install.sh` later is safe.
+The Pi comes back up in the kiosk, showing an empty browser window. Re-running
+`install.sh` later is safe, and it never overwrites `kiosk.conf`.
 
-### 4. Add your dashboards
+### 5. Add your dashboards
 
 Open the management UI from any browser on your network (the install script
 prints the address):
