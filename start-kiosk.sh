@@ -1,56 +1,63 @@
 #!/usr/bin/env bash
-# Dashboard rotator kiosk — runs as the lightdm X session
+# Dashboard Rotator kiosk session.
+#
+# LightDM runs this as the Wayland session for the auto-login user. See
+# /usr/share/wayland-sessions/dashboard-rotator.desktop, written by install.sh.
+#
+# It starts a bare labwc compositor whose only client is the Chromium kiosk
+# window (launched by kiosk-session.sh), so none of the Raspberry Pi desktop
+# (panel, file manager, wallpaper) comes along.
 
-# Disable screen blanking / power management
-xset s off
-xset -dpms
-xset s noblank
+set -u
 
-# Rotate screen if needed, see 'xrandr -q' for outputs and 'xrandr -h' for options.
-# Set to 'normal' to disable rotation.
-DISPLAY_ORIENTATION=left
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR" || exit 1
 
-if [[ "${DISPLAY_ORIENTATION}" != 'normal' ]]; then
-    DISPLAY=:0 xrandr --orientation "${DISPLAY_ORIENTATION}"
+# LightDM pipes everything a session prints into ~/.xsession-errors, a file on
+# the SD card that grows for as long as the kiosk runs. Send it to the journal
+# instead, which install.sh keeps in RAM.
+if command -v systemd-cat >/dev/null 2>&1; then
+    exec > >(systemd-cat -t dashboard-rotator-kiosk) 2>&1
+else
+    exec > /dev/null 2>&1
 fi
 
-# Window manager (needed for Chromium to display)
-matchbox-window-manager &
+# --- Settings (see kiosk.conf.example) ---
+HIDE_CURSOR=yes
+CURSOR_THEME=dashboard-blank
+KEYBOARD_LAYOUT=
+[ -f "$SCRIPT_DIR/kiosk.conf" ] && . "$SCRIPT_DIR/kiosk.conf"
 
-# Hide the mouse cursor
-if command -v unclutter &>/dev/null; then
-    unclutter -idle 0.1 -root &
+if [ -n "$KEYBOARD_LAYOUT" ]; then
+    export XKB_DEFAULT_LAYOUT="$KEYBOARD_LAYOUT"
 fi
 
-# Ensure no stale Chromium lock
-rm -f /home/pi/.chromium-kiosk/SingletonLock 2>/dev/null
+# Hide the mouse pointer with a fully transparent cursor theme that install.sh
+# generates. unclutter is X11 only and does nothing under Wayland.
+if [ "$HIDE_CURSOR" = "yes" ] && [ -d "$HOME/.local/share/icons/$CURSOR_THEME" ]; then
+    export XCURSOR_THEME="$CURSOR_THEME"
+    export XCURSOR_SIZE=24
+    # Spelled out because Chromium's Wayland cursor loader does not look in
+    # ~/.local/share/icons on its own, unlike labwc.
+    export XCURSOR_PATH="$HOME/.local/share/icons:$HOME/.icons:/usr/share/icons:/usr/share/pixmaps"
+fi
 
-# Launch Chromium in kiosk mode with remote debugging enabled
-# The --remote-debugging-port flag enables CDP access for the server
-# Start with about:blank — the server will manage all tabs via CDP
-while true; do
-    chromium-browser \
-        --kiosk \
-        --remote-debugging-port=9222 \
-        --remote-allow-origins=http://localhost:3000 \
-        --noerrdialogs \
-        --no-first-run \
-        --no-default-browser-check \
-        --disable-infobars \
-        --disable-session-crashed-bubble \
-        --disable-component-update \
-        --disable-notifications \
-        --disable-popup-blocking \
-        --deny-permission-prompts \
-        --disable-geolocation \
-        --disable-features=TranslateUI,GlobalMediaControls,InterestFeedContentSuggestions \
-        --autoplay-policy=no-user-gesture-required \
-        --disable-features=TranslateUI \
-        --overscroll-history-navigation=0 \
-        --disk-cache-size=524288000 \
-        --user-data-dir=/home/pi/.chromium-kiosk \
-        "about:blank"
+# Raspberry Pi renderer tweaks, mirroring /usr/bin/labwc-pi.
+if command -v raspi-config >/dev/null 2>&1 && raspi-config nonint is_pi 2>/dev/null; then
+    export WLR_DRM_FORCE_LIBLIFTOFF=1
+    if ! raspi-config nonint gpu_has_mmu 2>/dev/null; then
+        export WLR_RENDERER=pixman
+    fi
+fi
 
-    # If Chromium exits, wait briefly then restart
-    sleep 2
-done
+# -C makes labwc read its config from the kiosk directory only, which keeps the
+# system autostart (desktop panel, file manager) out of this session.
+# -S runs the browser loop and shuts the compositor down if that loop ever ends,
+# which makes LightDM start the session over.
+LAUNCH=(labwc -C "$SCRIPT_DIR/kiosk/labwc" -S "$SCRIPT_DIR/kiosk-session.sh")
+
+if [ -z "${DBUS_SESSION_BUS_ADDRESS:-}" ] && command -v dbus-run-session >/dev/null 2>&1; then
+    exec dbus-run-session -- "${LAUNCH[@]}"
+fi
+
+exec "${LAUNCH[@]}"

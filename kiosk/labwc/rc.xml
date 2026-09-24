@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Minimal labwc configuration for the kiosk session. Chromium runs in kiosk mode
+  and covers the whole output, so nearly all of labwc's defaults are irrelevant
+  here; this file mostly exists as a place to tweak the compositor if you ever
+  need to. See labwc-config(5).
+-->
+<labwc_config>
+  <core>
+    <gap>0</gap>
+  </core>
+  <focus>
+    <followMouse>no</followMouse>
+  </focus>
+</labwc_config>

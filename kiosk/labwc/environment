@@ -1,0 +1,6 @@
+# Environment variables for the kiosk compositor. labwc reads this file at
+# startup.
+#
+# Nothing is set here by default. Keyboard layout and cursor settings come from
+# kiosk.conf instead, which start-kiosk.sh exports before launching labwc, so
+# that all kiosk settings live in one place.

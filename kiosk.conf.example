@@ -1,0 +1,41 @@
+# Dashboard Rotator kiosk settings.
+#
+# install.sh copies this file to kiosk.conf on first run. Edit kiosk.conf (it is
+# git-ignored, so updates never overwrite it) and restart the kiosk session with:
+#
+#   sudo systemctl restart lightdm
+
+# Screen rotation, applied with wlr-randr when the session starts.
+# One of: normal, 90, 180, 270, flipped, flipped-90, flipped-180, flipped-270
+# 90 rotates the picture counter-clockwise (portrait, top edge to the left).
+ROTATION=normal
+
+# Hide the mouse pointer (yes/no). The pointer is hidden with a fully
+# transparent cursor theme, so a connected mouse still works, you just cannot
+# see where it is. Set to no while logging into dashboards by hand.
+HIDE_CURSOR=yes
+
+# Keyboard layout for the kiosk session, used when you type into a dashboard on
+# a keyboard plugged into the Pi. An XKB layout code such as us, gb, de, ch.
+# Leave empty to use the system default. install.sh pre-fills this from the
+# desktop session's own setting.
+KEYBOARD_LAYOUT=
+
+# Port the rotator server listens on. Must match the server's PORT.
+SERVER_PORT=3000
+
+# Chrome DevTools Protocol port the server uses to drive the browser.
+CDP_PORT=9222
+
+# Chromium profile directory. Cookies and logins live here and survive reboots.
+PROFILE_DIR="$HOME/.chromium-kiosk"
+
+# Keep Chromium's browser cache in RAM (yes/no). Chromium rewrites its cache
+# constantly, which is the single biggest source of SD card wear on a kiosk.
+# yes puts it in a tmpfs, capped at 64 MB: nothing is written to the card, at
+# the price of a cold cache after every reboot.
+CACHE_IN_RAM=yes
+
+# Extra flags appended to the Chromium command line, e.g.
+# CHROMIUM_EXTRA_FLAGS="--force-device-scale-factor=1.5"
+CHROMIUM_EXTRA_FLAGS=""

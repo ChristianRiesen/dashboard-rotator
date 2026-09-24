@@ -1,0 +1,18 @@
+# Template for the rotator server unit. install.sh fills in __USER__ and __DIR__
+# and writes the result to /etc/systemd/system/dashboard-rotator-server.service.
+[Unit]
+Description=Dashboard Rotator Server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=__USER__
+WorkingDirectory=__DIR__
+ExecStart=__DIR__/start-server.sh
+Restart=always
+RestartSec=5
+Environment=NODE_ENV=production
+
+[Install]
+WantedBy=multi-user.target

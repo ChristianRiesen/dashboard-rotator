@@ -1,0 +1,6 @@
+# labwc autostart for the kiosk session.
+#
+# Deliberately empty: this file exists so labwc does not fall back to the
+# Raspberry Pi desktop autostart (/etc/xdg/labwc/autostart), which would launch
+# the taskbar and file manager on top of the kiosk. The browser is started by
+# kiosk-session.sh instead (see start-kiosk.sh).
