@@ -1,0 +1,41 @@
+{
+  "TranslateEnabled": false,
+  "SearchSuggestEnabled": false,
+  "AlternateErrorPagesEnabled": false,
+  "SpellcheckEnabled": false,
+
+  "PasswordManagerEnabled": false,
+  "PasswordLeakDetectionEnabled": false,
+  "AutofillAddressEnabled": false,
+  "AutofillCreditCardEnabled": false,
+
+  "SyncDisabled": true,
+  "BrowserSignin": 0,
+  "MetricsReportingEnabled": false,
+  "SafeBrowsingExtendedReportingEnabled": false,
+  "PrivacySandboxPromptEnabled": false,
+  "PromotionalTabsEnabled": false,
+  "DefaultBrowserSettingEnabled": false,
+  "BackgroundModeEnabled": false,
+  "ComponentUpdatesEnabled": false,
+  "EnableMediaRouter": false,
+  "IncognitoModeAvailability": 1,
+
+  "DefaultNotificationsSetting": 2,
+  "DefaultGeolocationSetting": 2,
+  "DefaultPopupsSetting": 2,
+  "DefaultSensorsSetting": 2,
+  "DefaultClipboardSetting": 2,
+  "DefaultWebBluetoothGuardSetting": 2,
+  "DefaultWebUsbGuardSetting": 2,
+  "DefaultSerialGuardSetting": 2,
+  "DefaultFileSystemReadGuardSetting": 2,
+  "DefaultFileSystemWriteGuardSetting": 2,
+  "AudioCaptureAllowed": false,
+  "VideoCaptureAllowed": false,
+  "ScreenCaptureAllowed": false,
+
+  "DownloadRestrictions": 3,
+  "PromptForDownloadLocation": false,
+  "PrintingEnabled": false
+}

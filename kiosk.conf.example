@@ -36,6 +36,10 @@ PROFILE_DIR="$HOME/.chromium-kiosk"
 # the price of a cold cache after every reboot.
 CACHE_IN_RAM=yes
 
-# Extra flags appended to the Chromium command line, e.g.
-# CHROMIUM_EXTRA_FLAGS="--force-device-scale-factor=1.5"
+# Extra flags appended to the Chromium command line. The defaults already
+# suppress every prompt, bubble and popup a kiosk should never show; use this to
+# add to them, e.g.
+#   CHROMIUM_EXTRA_FLAGS="--force-device-scale-factor=1.5"
+# Popup windows are blocked by default. If a dashboard needs one to log in:
+#   CHROMIUM_EXTRA_FLAGS="--disable-popup-blocking"
 CHROMIUM_EXTRA_FLAGS=""

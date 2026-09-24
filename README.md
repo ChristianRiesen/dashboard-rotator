@@ -140,6 +140,46 @@ git-ignored). Apply changes with `sudo systemctl restart lightdm`.
 | `CACHE_IN_RAM` | `yes` | Keeps Chromium's cache in a tmpfs instead of on the card |
 | `CHROMIUM_EXTRA_FLAGS` | empty | Extra Chromium command line flags |
 
+## Nothing pops up over the dashboards
+
+A kiosk has nobody sitting in front of it to dismiss things, so Chromium is
+started with every banner, bubble and one-off screen it knows how to suppress
+turned off: the translation bar, the "save password" and crash-restore bubbles,
+notification and permission prompts, the search engine choice screen, form
+resubmission prompts, sign-in and sync prompts.
+
+Some of these have no command line switch at all, so `install.sh` also writes a
+managed policy file to `/etc/chromium/policies/managed/dashboard-rotator.json`
+(from `kiosk/chromium-policies.json`). It covers what the flags cannot reach:
+
+- translation, autofill and the password manager, including leak warnings
+- the Privacy Sandbox prompt and the promotional first-run tabs
+- notification, location, sensor, clipboard, Bluetooth, USB, serial and file
+  system permission prompts, and camera, microphone and screen capture
+- **print preview** — a page calling `window.print()` would otherwise take over
+  the whole screen
+- **downloads** — blocked outright, so no download bubble ever appears
+- **popup windows** — a page opening one would otherwise put a second window on
+  top of the rotation
+
+The policy file is machine-wide, so it also applies if you ever exit the kiosk
+and browse on the Pi normally. `uninstall.sh` removes it. On the kiosk itself
+you can see exactly what took effect at `chrome://policy`.
+
+Two things this does **not** cover:
+
+- **JavaScript dialogs.** A dashboard calling `alert()`, `confirm()` or
+  `onbeforeunload` still blocks its own tab until somebody dismisses it —
+  Chromium has no switch or policy for that.
+- **Certificate warnings.** A dashboard on a self-signed certificate shows a
+  full-page warning. Install the CA on the Pi, or as a last resort add
+  `CHROMIUM_EXTRA_FLAGS="--ignore-certificate-errors"` in `kiosk.conf` and
+  accept that it disables certificate checking for every dashboard.
+
+Background dashboards are also kept fully awake — renderer backgrounding,
+occlusion and timer throttling are all off — so the rotation never switches to
+a stale or half-painted tab.
+
 ## Nothing writes to the SD card
 
 A dashboard runs unattended for months, and a card that is logged to all day
@@ -184,6 +224,7 @@ Files worth knowing about:
 | `start-kiosk.sh` | The LightDM session: environment, then labwc |
 | `kiosk-session.sh` | Screen rotation and the Chromium supervision loop |
 | `kiosk/labwc/` | labwc config for the kiosk session, deliberately minimal |
+| `kiosk/chromium-policies.json` | Managed Chromium policies that suppress prompts and popups |
 | `kiosk.conf.example` | Template for the display-side settings above |
 | `server.js`, `tab-manager.js`, `storage.js` | The backend and its CDP tab management |
 

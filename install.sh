@@ -167,6 +167,20 @@ else
     warn "python3 not found, skipping the blank cursor theme (the pointer will stay visible)."
 fi
 
+# --- Chromium policies -------------------------------------------------------
+
+# Several kiosk annoyances have no command line switch: the save-password
+# bubble, the Privacy Sandbox prompt, print preview, download prompts and the
+# permission dialogs. Those are managed policies, which Chromium reads from
+# /etc/chromium/policies/managed. They apply to every Chromium on this machine.
+say "Installing the Chromium kiosk policies..."
+
+sudo mkdir -p /etc/chromium/policies/managed
+sudo cp "$SCRIPT_DIR/kiosk/chromium-policies.json" \
+    /etc/chromium/policies/managed/dashboard-rotator.json
+info "Policies: /etc/chromium/policies/managed/dashboard-rotator.json"
+info "Check them on the kiosk itself at chrome://policy"
+
 # --- Kiosk session -----------------------------------------------------------
 
 say "Registering the kiosk session with LightDM..."

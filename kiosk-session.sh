@@ -57,6 +57,11 @@ if [ "$CACHE_IN_RAM" = "yes" ]; then
     CACHE_FLAGS=(--disk-cache-dir="$CACHE_DIR" --disk-cache-size=67108864)
 fi
 
+# Anything that can put a bubble, banner or dialog on the screen is switched
+# off here. What cannot be reached from the command line is handled by the
+# managed policy file install.sh drops in /etc/chromium/policies/managed/ —
+# the save-password bubble, the Privacy Sandbox prompt, print preview and
+# permission prompts among them.
 FLAGS=(
     --kiosk
     --remote-debugging-port="$CDP_PORT"
@@ -65,18 +70,30 @@ FLAGS=(
     --noerrdialogs
     --no-first-run
     --no-default-browser-check
+    --disable-default-apps
+    # No banners, bubbles or one-off screens over the dashboards.
     --disable-infobars
     --disable-session-crashed-bubble
     --hide-crash-restore-bubble
-    --disable-component-update
+    --disable-prompt-on-repost
+    --disable-search-engine-choice-screen
+    --disable-features=Translate
     --disable-notifications
-    --disable-popup-blocking
     --deny-permission-prompts
+    --disable-sync
     --password-store=basic
+    --disable-component-update
     --check-for-update-interval=31536000
-    --disable-features=TranslateUI,GlobalMediaControls,InterestFeedContentSuggestions
+    # Page behaviour: let dashboards play media, and ignore stray touch input.
     --autoplay-policy=no-user-gesture-required
     --overscroll-history-navigation=0
+    --disable-pinch
+    # Keep the dashboards that are not currently on screen fully alive, so the
+    # rotation never switches to a stale or half-painted tab.
+    --disable-backgrounding-occluded-windows
+    --disable-renderer-backgrounding
+    --disable-background-timer-throttling
+    --disable-ipc-flooding-protection
     # Nothing may write log or crash files to the SD card.
     --log-level=3
     --disable-breakpad

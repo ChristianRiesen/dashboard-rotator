@@ -24,7 +24,8 @@ info "Service removed."
 
 say "Removing the kiosk session..."
 sudo rm -f "$SESSION_FILE"
-info "Session file removed."
+sudo rm -f /etc/chromium/policies/managed/dashboard-rotator.json
+info "Session file and Chromium policies removed."
 
 say "Restoring the logging configuration..."
 sudo rm -f /etc/systemd/journald.conf.d/zz-dashboard-rotator.conf
